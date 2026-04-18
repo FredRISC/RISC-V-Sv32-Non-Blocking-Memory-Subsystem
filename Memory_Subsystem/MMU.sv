@@ -31,6 +31,7 @@ input write_req_in,
 output [TAG_BITS-1:0] physical_tag_out, // The Physical Tag translated by TLB to be passed to the VIPT L1 Cache
 output physical_tag_valid_out, // Valid flag for the output physical tag; to both CPU and L1 Cache
 output Physical_Page_ID_Miss_out,  // debug: TLB miss
+output page_fault_out, // Signals the CPU to take a trap (instruction failed)
 
 // Control Registers
 input [31:0] satp_in,
@@ -94,6 +95,7 @@ PTW PTW_inst(
     .fill_virtual_page_out(ptw_fill_virtual_page),
     .fill_physical_page_out(ptw_fill_physical_page),
     .fill_dirty_bit_out(ptw_fill_dirty_bit),
+    .page_fault_out(page_fault_out),
     .ptw_busy_out(ptw_busy_out),
     .ptw_mem_req_valid_out(ptw_mem_req_valid_out),
     .ptw_mem_req_type_out(ptw_mem_req_type_out),
@@ -110,3 +112,7 @@ assign physical_tag_valid_out = TLB_Physical_Page_ID_valid_out; // To CPU (LSQ) 
 
 endmodule
 
+/*
+comments for resume added later:
+Ensured RISC-V architectural compliance by supporting sfence.vma instructions, implementing hardware flush mechanisms to invalidate the TLB and dynamically abort active Page Table Walks to maintain memory consistency.
+*/

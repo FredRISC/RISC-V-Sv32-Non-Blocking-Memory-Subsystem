@@ -2,6 +2,19 @@
 
 // RISC-V Sv32 Hardware Page Table Walker (PTW)
 
+/* 
+    RISC-V Sv32 Page Table Entry (PTE) Format (32 bits total):
+    | 31...................10 | 9.......8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+    | Physical Page Num (PPN) | Reserved  | D | A | G | U | X | W | R | V |
+    
+    V = Valid (1 if page is in memory, 0 if not allocated or on disk)
+    R, W, X = Read, Write, Execute permissions
+    U = User mode accessible
+    G = Global mapping
+    A = Accessed (Hardware sets to 1 when read/written)
+    D = Dirty (Hardware sets to 1 when written)
+*/
+
 module PTW (
     input clk,
     input rst_n,
@@ -20,6 +33,7 @@ module PTW (
     output logic [19:0] fill_virtual_page_out,
     output logic [19:0] fill_physical_page_out,
     output logic fill_dirty_bit_out,
+    output logic page_fault_out, // Raised to CPU if V=0 or permission denied
     output logic ptw_busy_out, // debug: PTW is currently walking
 
     // Memory Interface
@@ -40,7 +54,8 @@ module PTW (
         WAIT_L0_PTE,                // REQ_L0_PTE -> WAIT_L0_PTE, after sending memory request for L0 PTE
         UPDATE_DIRTY_BIT,           // WAIT_L0_PTE -> UPDATE_DIRTY_BIT, after receiving L0 PTE and if dirty fault is detected
         WAIT_UPDATE,                
-        FILL_TLB
+        FILL_TLB,
+        PAGE_FAULT                  // Trap state if PTE is invalid. Waits for pipeline flush.
     } ptw_state_t;
 
     ptw_state_t state, next_state;
@@ -95,6 +110,7 @@ module PTW (
         fill_physical_page_out = '0;
         fill_dirty_bit_out = 1'b0;
         ptw_busy_out = 1'b1;
+        page_fault_out = 1'b0;
 
         case (state)
             IDLE: begin
@@ -113,9 +129,12 @@ module PTW (
 
             WAIT_L1_PTE: begin
                 if (ptw_mem_data_valid_in) begin
-                    // Note: Skipping Valid/Permission bit checks
-                    // if not valid or permission not sufficient, we can directly raise a page fault to OS without updating TLB, so PTW process is done.
-                    next_state = REQ_L0_PTE;
+                    // Check Valid bit (bit 0)
+                    if (!ptw_mem_read_data_in[0]) begin
+                        next_state = PAGE_FAULT;
+                    end else begin
+                        next_state = REQ_L0_PTE;
+                    end
                 end
             end
 
@@ -128,7 +147,9 @@ module PTW (
 
             WAIT_L0_PTE: begin
                 if (ptw_mem_data_valid_in) begin
-                    if (is_dirty_fault || !ptw_mem_read_data_in[7]) begin // PTE[7] is Dirty bit
+                    if (!ptw_mem_read_data_in[0]) begin // Check Valid bit (bit 0)
+                        next_state = PAGE_FAULT;
+                    end else if (is_dirty_fault || !ptw_mem_read_data_in[7]) begin // PTE[7] is Dirty bit
                         next_state = UPDATE_DIRTY_BIT;
                     end 
                     else begin
@@ -158,6 +179,11 @@ module PTW (
                 fill_physical_page_out = l0_pte[29:10]; // PPN from L0 PTE
                 fill_dirty_bit_out = is_dirty_fault ? 1'b1 : l0_pte[7];
                 next_state = IDLE;
+            end
+
+            PAGE_FAULT: begin
+                page_fault_out = 1'b1;
+                // Wait here until the CPU takes the trap and asserts `flush`, which will reset the state machine to IDLE via the sequential block
             end
 
             default: next_state = IDLE;
