@@ -5,7 +5,7 @@
 
 `define XLEN 32
 `define PAGE_WIDTH 12 // 4KB per page
-`define TLB_SIZE 4096
+`define TLB_SIZE 64   // Industry standard size for a fully associative L1 (Micro) TLB
 `define PAGE_ID_WIDTH XLEN-PAGE_WIDTH
 
 module TLB(

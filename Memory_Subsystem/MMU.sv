@@ -4,7 +4,7 @@
 
 `define XLEN 32
 `define PAGE_WIDTH 12 // 4KB per page
-`define TLB_SIZE 4096
+`define TLB_SIZE 64
 `define PAGE_ID_WIDTH XLEN-PAGE_WIDTH
 
 `define CacheLineSize 64   // 64 bytes per line
@@ -87,9 +87,9 @@ PTW PTW_inst(
     .clk(clk),
     .rst_n(rst_n),
     .flush(flush),
-    .TLB_Miss_in(TLB_Physical_Page_ID_Miss_out),
-    .Dirty_Fault_in(TLB_Dirty_Fault_out),
-    .Virtual_Address_in(Virtual_Address_in),
+    .TLB_Miss_in(TLB_Physical_Page_ID_Miss_out), // core input: Miss flag from TLB 
+    .Dirty_Fault_in(TLB_Dirty_Fault_out),        // core input: Dirty fault flag from TLB 
+    .Virtual_Address_in(Virtual_Address_in),     // core input: virtual address used for PTE offset in L1 and L0 PTE frames
     .satp_in(satp_in),
     .fill_en_out(ptw_fill_en),
     .fill_virtual_page_out(ptw_fill_virtual_page),
@@ -112,7 +112,3 @@ assign physical_tag_valid_out = TLB_Physical_Page_ID_valid_out; // To CPU (LSQ) 
 
 endmodule
 
-/*
-comments for resume added later:
-Ensured RISC-V architectural compliance by supporting sfence.vma instructions, implementing hardware flush mechanisms to invalidate the TLB and dynamically abort active Page Table Walks to maintain memory consistency.
-*/
