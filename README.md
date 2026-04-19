@@ -1,6 +1,6 @@
 # RISC-V Sv32 Non-Blocking Memory Subsystem
 
-An out-of-order capable memory subsystem prototype written in SystemVerilog. This project implements a Virtually Indexed, Physically Tagged (VIPT) L1 Data Cache (D-Cache), a fully associative Micro-TLB, and a Hardware Page Table Walker (PTW) implementing the core **RISC-V Sv32** Virtual Memory architecture and a subset of the **Svadu** hardware dirty-bit extension.
+An out-of-order capable memory subsystem prototype written in SystemVerilog. This project implements a Virtually Indexed, Physically Tagged (VIPT) L1 Data Cache (D-Cache), a fully associative Micro-TLB, and a Hardware Page Table Walker (PTW) implementing the core **RISC-V Sv32** Virtual Memory architecture (bypassing permission bits) and a subset of the **Svadu** hardware dirty-bit extension.
 
 ## Key Architectural Features
 
@@ -15,7 +15,7 @@ An out-of-order capable memory subsystem prototype written in SystemVerilog. Thi
 * **Hardware Page Table Walker (PTW):** An explicit multi-state FSM that automatically traverses 2-level RISC-V Sv32 page tables in hardware using the `satp` CSR base address.
 * **Svadu Hardware Dirty-Bit Management:** Natively detects writes to clean pages (Store Page Faults). The PTW stalls the L1 D-Cache write, proactively updates the leaf PTE's dirty bit in main memory, and transparently updates the TLB. *(Note: The Accessed 'A' bit and static R/W/X permissions are omitted to scope the prototype around the more complex datapath update mechanisms).*
 * **Context Switch Datapath Hooks:** Implements global hardware flush mechanisms to immediately invalidate TLB entries and dynamically abort active PTW state machines, supporting `sfence.vma` instruction execution.
-* **Page Fault Exceptions:** Dynamically evaluates PTE Valid (`V`) and Permission bits, raising architectural Page Faults back to the CPU trap handler.
+* **Page Fault Exceptions:** Dynamically evaluates PTE Valid (`V`) bit, raising architectural Page Faults back to the CPU trap handler.
 
 ---
 
