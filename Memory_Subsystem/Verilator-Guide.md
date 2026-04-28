@@ -3,7 +3,7 @@
 1. Include Headers: 
     Include verilated.h (core library), verilated_vcd_c.h (for waveform dumping), and VYourModule.h (the transpiled SV module).
 2. Instantiate the DUT: 
-    Create a pointer to the transpiled module: VL1Cache* dut = new VL1Cache;.
+    Create a pointer to the transpiled module: e.g. VL1Cache* dut = new VL1Cache;.
 3. The Clock Loop: 
     Create a while loop that simulates time. Inside the loop, manually toggle the clock pin (dut->clk = 1; dut->eval(); dut->clk = 0; dut->eval();).
 4. Stimulus & Evaluation: 
@@ -28,10 +28,10 @@
     The PTW will then fill the TLB entry, so the CPU can retry the request and get the physical tag in the next cycle. Page fault is also tested.
 
     Phase 4: Full System Integration
-    Goal: Connect the MMU and Cache together in Verilator. The testbench acts as the CPU (sending VAs) and the L2 Memory Arbiter
+    Test & Goal: Connect the MMU and Cache together in Verilator. The testbench acts as the CPU (sending VAs) and the L2/Memory
 
 # Commands to run Verilator and Generate the makefile:
 ### 
-    verilator -Wall --cc --trace L1Cache.sv --exe tb_L1Cache.cpp -Wno-fatal
-    make -j -C obj_dir -f VL1Cache.mk
-    ./obj_dir/VL1Cache
+    verilator -Wall --cc --trace top.sv --exe tb_full_system.cpp -Wno-fatal
+    make -j -C obj_dir -f Vtop.mk
+    ./obj_dir/Vtop
