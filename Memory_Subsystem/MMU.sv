@@ -138,5 +138,6 @@ assign physical_address = {TLB_Physical_Page_ID_out, Virtual_Address_in[`PAGE_WI
 // output assignments
 assign physical_tag_out = physical_address[(`XLEN-1)-:`TAG_BITS];
 assign physical_tag_valid_out = TLB_Physical_Page_ID_valid_out; // To CPU (LSQ) so it can release the request and proceed to the next one
+assign Physical_Page_ID_Miss_out = TLB_Physical_Page_ID_Miss_out; // Connect internal TLB miss flag to the output port
 
 endmodule

@@ -77,8 +77,8 @@ module PTW (
     logic [31:0] l0_pte; // PTE read from L0 page table (MEM[l1_pte*4KB + VPN0*4])
     
     // Sv32 Virtual Address breakdown
-    logic [9:0] vpn1; // 10-bit Virtual Page Number [31:22]
-    logic [9:0] vpn0; // 10-bit Virtual Page Number [21:12]
+    logic [9:0] vpn1; // 10-bit Virtual Page Number (vaddr[31:22])
+    logic [9:0] vpn0; // 10-bit Virtual Page Number (vaddr[21:12])
     assign vpn1 = current_va[31:22];
     assign vpn0 = current_va[21:12];
 

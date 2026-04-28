@@ -21,13 +21,13 @@ private:
     VMMU* dut;
     const int PTW_RESPONSE_LATENCY = 10; // Number of cycles after which PTW response will be ready
     int ptw_response_counter = 0;
-    int mocked_pte_data = 0x3555504F; // Mocked PTE data to be returned to PTW (set last hex digit to F for valid, E for invalid to trigger page fault)
+    int mocked_pte_data = 0; // Mocked PTE data to be returned to PTW (set last hex digit to F for valid, E for invalid to trigger page fault)
     int test_types = 0;
     bool request_pending = false; // Flag to indicate if we are currently counting down for a request
 public:
-    SimulatedEngine(VMMU* dut_ptr): dut(dut_ptr), ptw_response_counter(0), mocked_pte_data(0x3555504F), test_types(0), request_pending(false) {}
+    SimulatedEngine(VMMU* dut_ptr): dut(dut_ptr), ptw_response_counter(0), mocked_pte_data(0), test_types(0), request_pending(false) {}
     
-    // CPU interface - drive vpn to MMU to trigger TLB lookup and miss
+    // CPU interface - Drive vpn to MMU to trigger TLB lookup and miss
     void CPU_drive_vpn(int vaddr, int req_type = 1, int test_type = 0) { // req_type: 1 for load, 0 for store
         dut->Virtual_Address_in = vaddr;
         dut->load_req_in = req_type; // or dut->store_req_in = 1 for write request
@@ -46,11 +46,11 @@ public:
     }
     // CPU interface - catch the physical tag output from MMU and print it out
     // observe physical_tag_out, physical_tag_valid_out, Physical_Page_ID_Miss_out, page_fault_out,
-    void monitor_mmu_output() {
-        if(dut->Physical_Page_ID_Miss_out){
+    void monitor_output() {
+        if(dut->Physical_Page_ID_Miss_out){ // From MMU
             std::cout << "TLB Miss detected!" << std::endl;
         }
-        if(dut->physical_tag_valid_out && test_types == 0) {
+        if(dut->TLB_physical_tag_valid_out && test_types == 0) { // From L1Cache
             std::cout << "Test 1 Completed - Received Physical Tag: 0x" << std::hex << dut->physical_tag_out << std::dec << std::endl;
             dut->load_req_in = 0;  // Deasserted after CPU sees Physical_Page_ID_valid_out
             dut->store_req_in = 0;
